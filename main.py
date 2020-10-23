@@ -9,6 +9,26 @@ def on_close():
     sys.exit()
 
 
+class EntityPlayer:
+    name = ""
+    health = 100
+
+    def __init__(self, name):
+        self.name = name
+
+    def get_name(self):
+        return self.name
+
+    def set_name(self, name):
+        self.name = name
+
+    def get_health(self):
+        return self.health
+
+    def set_health(self, health):
+        self.health = health
+
+
 class GUIGame:
     # user's name
     name = ""
