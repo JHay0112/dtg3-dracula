@@ -1,16 +1,18 @@
+import random
+import entities
+
+
 # defines everything in a room and the other places it can go
 class Room:
-    # objects set in constructor
-    name = ""
-
-    # not set in constructor, set later
-    items = []
-    enemies = []
-    # list of Room objects in order of N-E-S-W.
-    valid_moves = []
-
     def __init__(self, name):
+        # instance variables
         self.name = name
+        # list of EntityHealItem objects
+        self.items = []
+        # list of EntityEnemy objects
+        self.enemies = []
+        # list of Room objects in order of N-E-S-W.
+        self.valid_moves = []
 
     def get_name(self):
         return self.name
@@ -24,8 +26,8 @@ class Room:
     def get_items(self):
         return self.items
 
-    def set_items(self, items):
-        self.items = items
+    def add_item(self, item):
+        self.items.append(item)
 
     def get_enemies(self):
         return self.enemies
@@ -35,27 +37,32 @@ class Room:
 
 
 class RoomManager:
+    # class variables
+    # number of healing items to add to the map
+    NUM_ITEMS = 3
+
+    # every room in the map
     Rooms = {
-        "room_entrance":     Room("Entrance Hall"),
-        "room_mainhall":     Room("Main Hall"),
-        "room_backhall":     Room("Back Hall"),
-        "room_passage":      Room("Passage"),
-        "room_scullery":     Room("Scullery"),
-        "room_cellar":       Room("Cellar"),
-        "room_kitchen":      Room("Kitchen"),
-        "room_pantry":       Room("Pantry"),
-        "room_sunroom":      Room("Sun Room"),
-        "room_westhall":     Room("West Hall"),
-        "room_toilet":       Room("Toilet"),
-        "room_westtower":    Room("West Tower"),
-        "room_drawingroom":  Room("Drawing Room"),
-        "room_library":      Room("Library"),
-        "room_bedroom":      Room("Bedroom"),
+        "room_entrance": Room("Entrance Hall"),
+        "room_mainhall": Room("Main Hall"),
+        "room_backhall": Room("Back Hall"),
+        "room_passage": Room("Passage"),
+        "room_scullery": Room("Scullery"),
+        "room_cellar": Room("Cellar"),
+        "room_kitchen": Room("Kitchen"),
+        "room_pantry": Room("Pantry"),
+        "room_sunroom": Room("Sun Room"),
+        "room_westhall": Room("West Hall"),
+        "room_toilet": Room("Toilet"),
+        "room_westtower": Room("West Tower"),
+        "room_drawingroom": Room("Drawing Room"),
+        "room_library": Room("Library"),
+        "room_bedroom": Room("Bedroom"),
         "room_dressingroom": Room("Dressing Room"),
-        "room_bathroom":     Room("Bathroom"),
+        "room_bathroom": Room("Bathroom"),
         "room_eastcorridor": Room("East Corridor"),
-        "room_lounge":       Room("Lounge"),
-        "room_easttower":    Room("East Tower")
+        "room_lounge": Room("Lounge"),
+        "room_easttower": Room("East Tower")
     }
 
     def __init__(self):
@@ -180,6 +187,16 @@ class RoomManager:
             None,
             self.Rooms["room_lounge"]
         ])
+
+        # add healing items to the map
+        for i in range(0, self.NUM_ITEMS):
+            # select a random room, and add a +10 HP health pack
+            room = random.choice(list(self.Rooms.values()))
+            room_items = room.get_items()
+            # skip if there's already an item here
+            if len(room_items) != 0:
+                continue
+            room.add_item(entities.EntityHealItem("Health Pack", 10))
 
     def get_rooms(self):
         return self.Rooms

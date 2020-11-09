@@ -12,62 +12,51 @@ def on_close():
 
 
 class GUIGame:
-    # window root object
-    tk_parent = None
-
-    # frames
-    frm_container = None
-    frm_inventory = None
-    frm_map = None
-    frm_log = None
-
-    # canvases
-    cnv_inventory = None
-    cnv_map = None
-    cnv_log = None
-
-    # game objects
-    player = None
-    room_manager = None
-    rooms = None
-
     def __init__(self, tk_parent, name):
-        self.name = name
+        # window root object
         self.tk_parent = tk_parent
+        # player's name
+        self.name = name
 
         # un-hide the window
         self.tk_parent.deiconify()
 
+        # game object setup
         self.player = entities.EntityPlayer(name)
         self.room_manager = navigation.RoomManager()
         self.rooms = self.room_manager.get_rooms()
-
+        # set the starting room
         self.player.set_current_room(self.rooms["room_entrance"])
         print(f"{self.player.get_name()} is in {self.player.get_current_room().get_name()}")
 
+        # window setup - populate frames
         self.frm_container = tk.Frame(self.tk_parent)
-        self.frm_inventory = tk.Frame(self.frm_container, highlightbackground="black", highlightthickness=1)
+        self.frm_stats = tk.Frame(self.frm_container, highlightbackground="black", highlightthickness=1)
         self.frm_map = tk.Frame(self.frm_container, highlightbackground="black", highlightthickness=1)
         self.frm_log = tk.Frame(self.frm_container, highlightbackground="black", highlightthickness=1)
 
-        lbl_inventory = ttk.Label(self.frm_container, text="Inventory", font=("Arial", 18))
-        lbl_map = ttk.Label(self.frm_container, text="Map", font=("Arial", 18))
-        lbl_log = ttk.Label(self.frm_container, text="Log", font=("Arial", 18))
+        # section titles
+        lbl_stats = ttk.Label(self.frm_container, text="Stats", font=("Arial", 22))
+        lbl_map = ttk.Label(self.frm_container, text="Map", font=("Arial", 22))
+        lbl_log = ttk.Label(self.frm_container, text="Log", font=("Arial", 22))
 
-        self.cnv_inventory = tk.Canvas(self.frm_inventory, width=100, height=300)
-        self.cnv_map = tk.Canvas(self.frm_map, width=300, height=300)
-        self.cnv_log = tk.Canvas(self.frm_log, width=100, height=300)
+        # populate canvases - TODO dynamic resizing?
+        self.cnv_stats = tk.Canvas(self.frm_stats, width=200, height=300)
+        self.cnv_map = tk.Canvas(self.frm_map, width=300, height=300, bg="black")
+        self.cnv_log = tk.Canvas(self.frm_log, width=200, height=300)
 
-        lbl_inventory.grid(row=0, column=0)
+        # start populating grids - labels on container, canvases on respective frames
+        lbl_stats.grid(row=0, column=0)
         lbl_map.grid(row=0, column=1)
         lbl_log.grid(row=0, column=2)
 
-        self.cnv_inventory.grid(row=0, column=0)
+        self.cnv_stats.grid(row=0, column=0)
         self.cnv_map.grid(row=0, column=0)
         self.cnv_log.grid(row=0, column=0)
 
+        # lastly populate the frames on the window's grid
         self.frm_container.grid(row=0, column=0)
-        self.frm_inventory.grid(row=1, column=0)
+        self.frm_stats.grid(row=1, column=0)
         self.frm_map.grid(row=1, column=1)
         self.frm_log.grid(row=1, column=2)
 
@@ -77,17 +66,31 @@ class GUIGame:
         self.tk_parent.bind("s", lambda event, direction="S": self.move(direction))
         self.tk_parent.bind("a", lambda event, direction="W": self.move(direction))
 
-        # render the map
-        self.render(self.cnv_map)
+        # render the screen
+        self.render()
 
-    def render(self, canvas):
-        # clear the screen
+    def render(self):
+        self.render_map(self.cnv_map)
+        self.render_stats(self.cnv_stats)
+
+    def render_stats(self, canvas):
+        # clear the canvas
+        canvas.delete(tk.ALL)
+
+        canvas.create_text(100, 20, text="Name", font=("Arial", 18))
+        canvas.create_text(100, 45, text=str(self.player.get_name()), font=("Arial", 16))
+        canvas.create_text(100, 70, text="Health", font=("Arial", 18))
+        canvas.create_text(100, 95, text=str(self.player.get_health()), font=("Arial", 16))
+
+    def render_map(self, canvas):
+        # clear the canvas
         canvas.delete(tk.ALL)
 
         valid_moves = self.player.get_current_room().get_valid_moves()
 
-        # render the current room
+        # render the current room - TODO dynamic resizing?
         canvas.create_rectangle(50, 50, 250, 250, fill="white", outline="black")
+        canvas.create_text(150, 150, text=self.player.get_current_room().get_name(), font=("Arial", 18))
         # north hallway
         if valid_moves[0] is not None:
             canvas.create_rectangle(125, 0, 175, 50, fill="white", outline="black")
@@ -102,13 +105,27 @@ class GUIGame:
             canvas.create_rectangle(0, 125, 50, 175, fill="white", outline="black")
 
     def move(self, direction):
+        # updates the player's location to the room in the specified direction
         if direction == "N":
+            # fetch the list of rooms adjacent to the current one
             valid_moves = self.player.get_current_room().get_valid_moves()
             if valid_moves[0] is None:
                 print("Can't go that way.")
             else:
+                # update the player's current room if the move is valid
                 self.player.set_current_room(valid_moves[0])
                 print(f"{self.player.get_name()} is in {self.player.get_current_room().get_name()}")
+                # check for healing items
+                room_items = self.player.get_current_room().get_items()
+                if len(room_items) != 0:
+                    for i in room_items:
+                        # add healing item amount to player's health
+                        current_health = self.player.get_health()
+                        self.player.set_health(current_health + i.get_heal_amount())
+                        print(f"{self.player.get_name()} found a {i.get_name()}! +{i.get_heal_amount()}HP!")
+                        # remove the item
+                        room_items.remove(i)
+
         elif direction == "E":
             valid_moves = self.player.get_current_room().get_valid_moves()
             if valid_moves[1] is None:
@@ -116,6 +133,14 @@ class GUIGame:
             else:
                 self.player.set_current_room(valid_moves[1])
                 print(f"{self.player.get_name()} is in {self.player.get_current_room().get_name()}")
+                room_items = self.player.get_current_room().get_items()
+                if len(room_items) != 0:
+                    for i in room_items:
+                        current_health = self.player.get_health()
+                        self.player.set_health(current_health + i.get_heal_amount())
+                        print(f"{self.player.get_name()} found a {i.get_name()}! +{i.get_heal_amount()}HP!")
+                        room_items.remove(i)
+
         elif direction == "S":
             valid_moves = self.player.get_current_room().get_valid_moves()
             if valid_moves[2] is None:
@@ -123,6 +148,14 @@ class GUIGame:
             else:
                 self.player.set_current_room(valid_moves[2])
                 print(f"{self.player.get_name()} is in {self.player.get_current_room().get_name()}")
+                room_items = self.player.get_current_room().get_items()
+                if len(room_items) != 0:
+                    for i in room_items:
+                        current_health = self.player.get_health()
+                        self.player.set_health(current_health + i.get_heal_amount())
+                        print(f"{self.player.get_name()} found a {i.get_name()}! +{i.get_heal_amount()}HP!")
+                        room_items.remove(i)
+
         elif direction == "W":
             valid_moves = self.player.get_current_room().get_valid_moves()
             if valid_moves[3] is None:
@@ -130,8 +163,15 @@ class GUIGame:
             else:
                 self.player.set_current_room(valid_moves[3])
                 print(f"{self.player.get_name()} is in {self.player.get_current_room().get_name()}")
+                room_items = self.player.get_current_room().get_items()
+                if len(room_items) != 0:
+                    for i in room_items:
+                        current_health = self.player.get_health()
+                        self.player.set_health(current_health + i.get_heal_amount())
+                        print(f"{self.player.get_name()} found a {i.get_name()}! +{i.get_heal_amount()}HP!")
+                        room_items.remove(i)
 
-        self.render(self.cnv_map)
+        self.render()
 
 
 class GUIMain:
@@ -185,7 +225,7 @@ class GUIMain:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.geometry("600x400")
+    # TODO dynamic resizing?
     root.resizable(width=False, height=False)
     window = GUIMain(root)
     root.mainloop()
