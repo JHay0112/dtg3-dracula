@@ -30,12 +30,19 @@ class GUIGame:
         self.frm_container = tk.Frame(self.tk_parent)
         self.frm_stats = tk.Frame(self.frm_container, highlightbackground="black", highlightthickness=1)
         self.frm_map = tk.Frame(self.frm_container, highlightbackground="black", highlightthickness=1)
+        self.frm_controls = tk.Frame(self.frm_container)
         self.frm_log = tk.Frame(self.frm_container, highlightbackground="black", highlightthickness=1)
 
         # section titles
         lbl_stats = ttk.Label(self.frm_container, text="Stats", font=("Arial", 22))
         lbl_map = ttk.Label(self.frm_container, text="Map", font=("Arial", 22))
         lbl_log = ttk.Label(self.frm_container, text="Log", font=("Arial", 22))
+
+        # control buttons
+        btn_north = ttk.Button(self.frm_controls, text="↑", command=lambda direction="N": self.move(direction))
+        btn_east = ttk.Button(self.frm_controls, text="→", command=lambda direction="E": self.move(direction))
+        btn_south = ttk.Button(self.frm_controls, text="↓", command=lambda direction="S": self.move(direction))
+        btn_west = ttk.Button(self.frm_controls, text="←", command=lambda direction="W": self.move(direction))
 
         # populate canvases - TODO dynamic resizing?
         self.cnv_stats = tk.Canvas(self.frm_stats, width=200, height=300)
@@ -49,7 +56,12 @@ class GUIGame:
         # start populating grids - labels on container, canvases on respective frames
         lbl_stats.grid(row=0, column=0)
         lbl_map.grid(row=0, column=1)
-        lbl_log.grid(row=2, column=0, columnspan=2)
+        lbl_log.grid(row=4, column=0, columnspan=2)
+
+        btn_north.grid(row=0, column=2)
+        btn_west.grid(row=1, column=0)
+        btn_east.grid(row=1, column=3)
+        btn_south.grid(row=2, column=2)
 
         self.cnv_stats.grid(row=0, column=0)
         self.cnv_map.grid(row=0, column=0)
@@ -58,7 +70,8 @@ class GUIGame:
         self.frm_container.grid(row=0, column=0)
         self.frm_stats.grid(row=1, column=0)
         self.frm_map.grid(row=1, column=1)
-        self.frm_log.grid(row=3, column=0, columnspan=2)
+        self.frm_controls.grid(row=3, column=0, columnspan=2)
+        self.frm_log.grid(row=5, column=0, columnspan=2)
 
         # set the starting room
         self.player.set_current_room(self.rooms["room_entrance"])
