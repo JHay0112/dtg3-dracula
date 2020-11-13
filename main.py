@@ -25,9 +25,6 @@ class GUIGame:
         self.player = entities.EntityPlayer(name)
         self.room_manager = navigation.RoomManager()
         self.rooms = self.room_manager.get_rooms()
-        # set the starting room
-        self.player.set_current_room(self.rooms["room_entrance"])
-        print(f"{self.player.get_name()} is in {self.player.get_current_room().get_name()}")
 
         # window setup - populate frames
         self.frm_container = tk.Frame(self.tk_parent)
@@ -43,22 +40,29 @@ class GUIGame:
         # populate canvases - TODO dynamic resizing?
         self.cnv_stats = tk.Canvas(self.frm_stats, width=200, height=300)
         self.cnv_map = tk.Canvas(self.frm_map, width=300, height=300, bg="black")
-        self.cnv_log = tk.Canvas(self.frm_log, width=200, height=300)
+
+        # log textbox
+        self.txt_log = tk.Text(self.frm_log)
+        self.txt_log.configure(state="disabled")
+        self.txt_log.grid(row=0, column=0)
 
         # start populating grids - labels on container, canvases on respective frames
         lbl_stats.grid(row=0, column=0)
         lbl_map.grid(row=0, column=1)
-        lbl_log.grid(row=0, column=2)
+        lbl_log.grid(row=2, column=0, columnspan=2)
 
         self.cnv_stats.grid(row=0, column=0)
         self.cnv_map.grid(row=0, column=0)
-        self.cnv_log.grid(row=0, column=0)
 
         # lastly populate the frames on the window's grid
         self.frm_container.grid(row=0, column=0)
         self.frm_stats.grid(row=1, column=0)
         self.frm_map.grid(row=1, column=1)
-        self.frm_log.grid(row=1, column=2)
+        self.frm_log.grid(row=3, column=0, columnspan=2)
+
+        # set the starting room
+        self.player.set_current_room(self.rooms["room_entrance"])
+        self.insert_log_text(f"{self.player.get_name()} is in {self.player.get_current_room().get_name()}\n")
 
         # bind keyboard keys to movement
         self.tk_parent.bind("w", lambda event, direction="N": self.move(direction))
@@ -104,72 +108,63 @@ class GUIGame:
         if valid_moves[3] is not None:
             canvas.create_rectangle(0, 125, 50, 175, fill="white", outline="black")
 
+    def insert_log_text(self, text):
+        self.txt_log.configure(state="normal")
+        self.txt_log.insert(tk.END, text)
+        self.txt_log.see(tk.END)
+        self.txt_log.configure(state="disabled")
+
+    def check_healing_items(self):
+        room_items = self.player.get_current_room().get_items()
+        if len(room_items) != 0:
+            for i in room_items:
+                # add healing item amount to player's health
+                current_health = self.player.get_health()
+                self.player.set_health(current_health + i.get_heal_amount())
+                self.insert_log_text(f"\n{self.player.get_name()} found a {i.get_name()}! +{i.get_heal_amount()}HP!\n")
+                # remove the item
+                room_items.remove(i)
+
     def move(self, direction):
         # updates the player's location to the room in the specified direction
         if direction == "N":
             # fetch the list of rooms adjacent to the current one
             valid_moves = self.player.get_current_room().get_valid_moves()
             if valid_moves[0] is None:
-                print("Can't go that way.")
+                self.insert_log_text("\nCan't go that way.\n")
             else:
                 # update the player's current room if the move is valid
                 self.player.set_current_room(valid_moves[0])
-                print(f"{self.player.get_name()} is in {self.player.get_current_room().get_name()}")
-                # check for healing items
-                room_items = self.player.get_current_room().get_items()
-                if len(room_items) != 0:
-                    for i in room_items:
-                        # add healing item amount to player's health
-                        current_health = self.player.get_health()
-                        self.player.set_health(current_health + i.get_heal_amount())
-                        print(f"{self.player.get_name()} found a {i.get_name()}! +{i.get_heal_amount()}HP!")
-                        # remove the item
-                        room_items.remove(i)
+                self.insert_log_text(f"\n{self.player.get_name()} is in {self.player.get_current_room().get_name()}\n")
+                # check for any healing items in the room
+                self.check_healing_items()
 
         elif direction == "E":
             valid_moves = self.player.get_current_room().get_valid_moves()
             if valid_moves[1] is None:
-                print("Can't go that way.")
+                self.insert_log_text("\nCan't go that way.\n")
             else:
                 self.player.set_current_room(valid_moves[1])
-                print(f"{self.player.get_name()} is in {self.player.get_current_room().get_name()}")
-                room_items = self.player.get_current_room().get_items()
-                if len(room_items) != 0:
-                    for i in room_items:
-                        current_health = self.player.get_health()
-                        self.player.set_health(current_health + i.get_heal_amount())
-                        print(f"{self.player.get_name()} found a {i.get_name()}! +{i.get_heal_amount()}HP!")
-                        room_items.remove(i)
+                self.insert_log_text(f"\n{self.player.get_name()} is in {self.player.get_current_room().get_name()}\n")
+                self.check_healing_items()
 
         elif direction == "S":
             valid_moves = self.player.get_current_room().get_valid_moves()
             if valid_moves[2] is None:
-                print("Can't go that way.")
+                self.insert_log_text("\nCan't go that way.\n")
             else:
                 self.player.set_current_room(valid_moves[2])
-                print(f"{self.player.get_name()} is in {self.player.get_current_room().get_name()}")
-                room_items = self.player.get_current_room().get_items()
-                if len(room_items) != 0:
-                    for i in room_items:
-                        current_health = self.player.get_health()
-                        self.player.set_health(current_health + i.get_heal_amount())
-                        print(f"{self.player.get_name()} found a {i.get_name()}! +{i.get_heal_amount()}HP!")
-                        room_items.remove(i)
+                self.insert_log_text(f"\n{self.player.get_name()} is in {self.player.get_current_room().get_name()}\n")
+                self.check_healing_items()
 
         elif direction == "W":
             valid_moves = self.player.get_current_room().get_valid_moves()
             if valid_moves[3] is None:
-                print("Can't go that way.")
+                self.insert_log_text("\nCan't go that way.\n")
             else:
                 self.player.set_current_room(valid_moves[3])
-                print(f"{self.player.get_name()} is in {self.player.get_current_room().get_name()}")
-                room_items = self.player.get_current_room().get_items()
-                if len(room_items) != 0:
-                    for i in room_items:
-                        current_health = self.player.get_health()
-                        self.player.set_health(current_health + i.get_heal_amount())
-                        print(f"{self.player.get_name()} found a {i.get_name()}! +{i.get_heal_amount()}HP!")
-                        room_items.remove(i)
+                self.insert_log_text(f"\n{self.player.get_name()} is in {self.player.get_current_room().get_name()}\n")
+                self.check_healing_items()
 
         self.render()
 
