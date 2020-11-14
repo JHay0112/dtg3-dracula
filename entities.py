@@ -25,6 +25,23 @@ class EntityPlayer:
         self.current_room = current_room
 
 
+class EntityEnemy:
+    name = ""
+    health = 100
+
+    def __init__(self, name):
+        self.name = name
+
+    def get_name(self):
+        return self.name
+
+    def get_health(self):
+        return self.health
+
+    def set_health(self, health):
+        self.health = health
+
+
 class EntityHealItem:
     name = ""
     heal_amount = 0

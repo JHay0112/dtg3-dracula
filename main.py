@@ -1,14 +1,98 @@
 # ttk has theming support for widgets, and looks closer to system-default
 import tkinter as tk
 import tkinter.ttk as ttk
+from tkinter import messagebox
 import entities
 import navigation
 import sys
+import random
 
 
 # callback for window exit (X button)
-def on_close():
+def on_close_exit():
     sys.exit()
+
+
+# callback for hitting X on the battle window to "disable" it
+def on_close_ignore():
+    pass
+
+
+class GUIBattle:
+    # constants
+    DAMAGE_GIVEN_MIN = 0
+    DAMAGE_GIVEN_MAX = 20
+    DAMAGE_TAKEN_MIN = 0
+    DAMAGE_TAKEN_MAX = 10
+
+    def __init__(self, tk_parent, player, enemy):
+        self.tk_parent = tk_parent
+        self.tk_parent.protocol("WM_DELETE_WINDOW", on_close_ignore)
+
+        self.player = player
+        self.enemy = enemy
+
+        # create and set stringvars so health labels can be updated elsewhere
+        self.var_player_health = tk.StringVar()
+        self.var_enemy_health = tk.StringVar()
+        self.var_player_health.set(str(self.player.get_health()))
+        self.var_enemy_health.set(str(self.enemy.get_health()))
+
+        # generate all widgets on a frame before adding them to the grid
+        frm_container = ttk.Frame(self.tk_parent)
+        lbl_battle = ttk.Label(frm_container, text="Battle", font=("Arial", 18))
+        msg_intro = tk.Message(frm_container, text=f"You've stumbled upon a {self.enemy.get_name()}",
+                               justify="center", font=("Arial", 12))
+
+        lbl_enemy = ttk.Label(frm_container, text=self.enemy.get_name(), font=("Arial", 16))
+        lbl_enemy_health = ttk.Label(frm_container, textvariable=self.var_enemy_health, font=("Arial", 12))
+
+        lbl_player = ttk.Label(frm_container, text=self.player.get_name(), font=("Arial", 16))
+        lbl_player_health = ttk.Label(frm_container, textvariable=self.var_player_health, font=("Arial", 12))
+
+        btn_defend = ttk.Button(frm_container, text="Defend", command=lambda defend=True: self.battle(defend))
+        btn_attack = ttk.Button(frm_container, text="Attack", command=lambda defend=False: self.battle(defend))
+
+        # insert widgets into the grid, span columns to center them relative to the buttons
+        lbl_battle.grid(row=0, columnspan=2)
+        msg_intro.grid(row=1, columnspan=2)
+        lbl_enemy.grid(row=2, columnspan=2)
+        lbl_enemy_health.grid(row=3, columnspan=2)
+        lbl_player.grid(row=4, columnspan=2)
+        lbl_player_health.grid(row=5, columnspan=2)
+
+        btn_defend.grid(row=6, column=0, sticky="nesw")
+        btn_attack.grid(row=6, column=1, sticky="nesw")
+
+        # pack the frame containing all widgets with some padding
+        frm_container.pack(padx=20, pady=20)
+
+    def battle(self, defend):
+        # if defend set to true, defend instead of attacking
+        if defend:
+            # no damage taken
+            return
+
+        damage_dealt = random.randint(self.DAMAGE_GIVEN_MIN, self.DAMAGE_GIVEN_MAX)
+        damage_taken = random.randint(self.DAMAGE_TAKEN_MIN, self.DAMAGE_TAKEN_MAX)
+
+        enemy_health = self.enemy.get_health() - damage_dealt
+        player_health = self.player.get_health() - damage_taken
+
+        # apply dealt damage to enemy
+        self.enemy.set_health(enemy_health)
+        self.var_enemy_health.set(str(enemy_health))
+
+        # apply taken damage to player
+        self.player.set_health(player_health)
+        self.var_player_health.set(str(player_health))
+
+        if player_health <= 0:
+            messagebox.showerror("You died!", "You died in combat! Press the button to exit.")
+            sys.exit()
+        elif enemy_health <= 0:
+            messagebox.showinfo("You won!", "You beat the enemy in combat! Press the button to continue.")
+            self.tk_parent.destroy()
 
 
 class GUIGame:
@@ -61,7 +145,7 @@ class GUIGame:
         btn_north.grid(row=0, column=2)
         btn_west.grid(row=1, column=0)
         btn_east.grid(row=1, column=3)
-        btn_south.grid(row=2, column=2)
+        btn_south.grid(row=1, column=2)
 
         self.cnv_stats.grid(row=0, column=0)
         self.cnv_map.grid(row=0, column=0)
@@ -127,6 +211,16 @@ class GUIGame:
         self.txt_log.see(tk.END)
         self.txt_log.configure(state="disabled")
 
+    def check_enemies(self):
+        room_enemies = self.player.get_current_room().get_enemies()
+        if len(room_enemies) != 0:
+            self.insert_log_text(f"\n{self.player.get_name()} encountered a {room_enemies[0].get_name()}!\n")
+            battle_window = tk.Toplevel()
+            # only allow user to interact with battle window
+            battle_window.grab_set()
+            battle = GUIBattle(battle_window, self.player, room_enemies[0])
+            room_enemies.remove(room_enemies[0])
+
     def check_healing_items(self):
         room_items = self.player.get_current_room().get_items()
         if len(room_items) != 0:
@@ -151,6 +245,8 @@ class GUIGame:
                 self.insert_log_text(f"\n{self.player.get_name()} is in {self.player.get_current_room().get_name()}\n")
                 # check for any healing items in the room
                 self.check_healing_items()
+                # check for enemies
+                self.check_enemies()
 
         elif direction == "E":
             valid_moves = self.player.get_current_room().get_valid_moves()
@@ -160,6 +256,7 @@ class GUIGame:
                 self.player.set_current_room(valid_moves[1])
                 self.insert_log_text(f"\n{self.player.get_name()} is in {self.player.get_current_room().get_name()}\n")
                 self.check_healing_items()
+                self.check_enemies()
 
         elif direction == "S":
             valid_moves = self.player.get_current_room().get_valid_moves()
@@ -169,6 +266,7 @@ class GUIGame:
                 self.player.set_current_room(valid_moves[2])
                 self.insert_log_text(f"\n{self.player.get_name()} is in {self.player.get_current_room().get_name()}\n")
                 self.check_healing_items()
+                self.check_enemies()
 
         elif direction == "W":
             valid_moves = self.player.get_current_room().get_valid_moves()
@@ -178,6 +276,7 @@ class GUIGame:
                 self.player.set_current_room(valid_moves[3])
                 self.insert_log_text(f"\n{self.player.get_name()} is in {self.player.get_current_room().get_name()}\n")
                 self.check_healing_items()
+                self.check_enemies()
 
         self.render()
 
@@ -189,8 +288,8 @@ class GUIMain:
         tk_start_window = tk.Toplevel()
 
         # if the user hits the X button, call on_close which will exit the application entirely
-        tk_start_window.protocol("WM_DELETE_WINDOW", on_close)
-        tk_parent.protocol("WM_DELETE_WINDOW", on_close)
+        tk_start_window.protocol("WM_DELETE_WINDOW", on_close_exit)
+        tk_parent.protocol("WM_DELETE_WINDOW", on_close_exit)
 
         # user's name
         var_name = tk.StringVar()

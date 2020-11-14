@@ -32,14 +32,15 @@ class Room:
     def get_enemies(self):
         return self.enemies
 
-    def set_enemies(self, enemies):
-        self.enemies = enemies
+    def add_enemy(self, enemy):
+        self.enemies.append(enemy)
 
 
 class RoomManager:
     # class variables
-    # number of healing items to add to the map
+    # number of healing items and enemies to add to the map
     NUM_ITEMS = 3
+    NUM_ENEMIES = 2
 
     # every room in the map
     Rooms = {
@@ -197,6 +198,16 @@ class RoomManager:
             if len(room_items) != 0:
                 continue
             room.add_item(entities.EntityHealItem("Health Pack", 10))
+
+        # add enemies
+        for i in range(0, self.NUM_ENEMIES):
+            # select a random room, and add an enemy
+            room = random.choice(list(self.Rooms.values()))
+            room_enemies = room.get_enemies()
+            # skip if there's already an item here
+            if len(room_enemies) != 0:
+                continue
+            room.add_enemy(entities.EntityEnemy("Vampire"))
 
     def get_rooms(self):
         return self.Rooms
