@@ -207,7 +207,10 @@ class RoomManager:
             # skip if there's already an item here
             if len(room_enemies) != 0:
                 continue
-            room.add_enemy(entities.EntityEnemy("Vampire"))
+            room.add_enemy(entities.EntityEnemy("Vampire", 50))
+
+        # add final boss (dracula)
+        self.Rooms["room_cellar"].add_enemy(entities.EntityEnemy("Dracula", 100))
 
     def get_rooms(self):
         return self.Rooms

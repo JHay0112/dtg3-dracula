@@ -29,8 +29,9 @@ class EntityEnemy:
     name = ""
     health = 100
 
-    def __init__(self, name):
+    def __init__(self, name, health):
         self.name = name
+        self.health = health
 
     def get_name(self):
         return self.name
