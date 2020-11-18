@@ -1,3 +1,7 @@
+# name: main.py
+# author: Mitchell Ward
+# purpose: main file
+
 import tkinter as tk
 import gui
 

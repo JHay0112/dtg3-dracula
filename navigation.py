@@ -1,8 +1,12 @@
+# name: navigation.py
+# author: Mitchell Ward
+# purpose: contains classes for map objects
+
 import random
 import entities
 
 
-# defines everything in a room and the other places it can go
+# purpose: defines everything in a room and the other places it can go
 class Room:
     def __init__(self, name):
         # instance variables
@@ -14,6 +18,7 @@ class Room:
         # list of Room objects in order of N-E-S-W.
         self.valid_moves = []
 
+    # purpose: getters/setters for instance variables
     def get_name(self):
         return self.name
 
@@ -36,6 +41,7 @@ class Room:
         self.enemies.append(enemy)
 
 
+# purpose: sets up the room objects and adds items/enemies to them
 class RoomManager:
     # class variables
     # number of healing items and enemies to add to the map

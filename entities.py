@@ -1,3 +1,8 @@
+# name: entities.py
+# author: Mitchell Ward
+# purpose: contains classes for various game entities
+
+# purpose: defines the player entity
 class EntityPlayer:
     name = ""
     health = 100
@@ -6,6 +11,7 @@ class EntityPlayer:
     def __init__(self, name):
         self.name = name
 
+    # purpose: getter/setters
     def get_name(self):
         return self.name
 
@@ -25,6 +31,7 @@ class EntityPlayer:
         self.current_room = current_room
 
 
+# purpose: defines the enemy entity
 class EntityEnemy:
     name = ""
     health = 100
@@ -33,8 +40,12 @@ class EntityEnemy:
         self.name = name
         self.health = health
 
+    # purpose: getters/setters
     def get_name(self):
         return self.name
+
+    def set_name(self, name):
+        self.name = name
 
     def get_health(self):
         return self.health
@@ -43,6 +54,7 @@ class EntityEnemy:
         self.health = health
 
 
+# purpose: defines an item that heals the player
 class EntityHealItem:
     name = ""
     heal_amount = 0
@@ -51,8 +63,15 @@ class EntityHealItem:
         self.name = name
         self.heal_amount = heal_amount
 
+    # purpose: getters/setters
     def get_name(self):
         return self.name
 
+    def set_name(self, name):
+        self.name = name
+
     def get_heal_amount(self):
         return self.heal_amount
+
+    def set_heal_amount(self, amount):
+        self.heal_amount = amount

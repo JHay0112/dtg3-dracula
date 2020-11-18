@@ -1,3 +1,7 @@
+# name: gui.py
+# author: Mitchell Ward
+# purpose: contains GUI classes and functionality
+
 # ttk has theming support for widgets, and looks closer to system-default
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -8,16 +12,17 @@ import sys
 import random
 
 
-# callback for window exit (X button)
+# purpose: callback for window exit (X button)
 def on_close_exit():
     sys.exit()
 
 
-# callback for hitting X on the battle window to "disable" it
+# purpose: dummy callback to "disable" the X button on battle window
 def on_close_ignore():
     pass
 
 
+# purpose: handles the battle window and battle system itself
 class GUIBattle:
     # constants
     DAMAGE_GIVEN_MIN = 0
@@ -25,11 +30,14 @@ class GUIBattle:
     DAMAGE_TAKEN_MIN = 0
     DAMAGE_TAKEN_MAX = 10
 
-    def __init__(self, tk_parent, player, enemy):
+    def __init__(self, tk_parent, game_object, enemy):
         self.tk_parent = tk_parent
         self.tk_parent.protocol("WM_DELETE_WINDOW", on_close_ignore)
 
-        self.player = player
+        # main game object
+        self.game_object = game_object
+
+        self.player = game_object.player
         self.enemy = enemy
 
         # create and set stringvars so health labels can be updated elsewhere
@@ -71,6 +79,7 @@ class GUIBattle:
         # pack the frame containing all widgets with some padding
         frm_container.pack(padx=20, pady=20)
 
+    # purpose: handles actual battle functionality
     def battle(self, defend):
         # if defend set to true, defend instead of attacking
         if defend:
@@ -91,21 +100,27 @@ class GUIBattle:
         self.player.set_health(player_health)
         self.var_player_health.set(str(player_health))
 
+        # update the health in the main game window
+        self.game_object.render_stats(self.game_object.cnv_stats)
+
         if player_health <= 0:
+            self.tk_parent.destroy()
             messagebox.showerror("You died!", "You died in combat! Press the button to exit.")
             sys.exit()
         elif enemy_health <= 0:
             if self.enemy.get_name() == "Dracula":
+                self.tk_parent.destroy()
                 messagebox.showinfo(
                     "You won!",
                     "You killed Dracula! Congratulations on beating the game. Press the button to exit."
                 )
                 sys.exit()
             else:
-                messagebox.showinfo("You won!", "You beat the enemy in combat! Press the button to continue.")
                 self.tk_parent.destroy()
+                messagebox.showinfo("You won!", "You beat the enemy in combat! Press the button to continue.")
 
 
+# purpose: handles main gameplay loop, rendering, etc
 class GUIGame:
     def __init__(self, tk_parent, name):
         # window root object
@@ -181,10 +196,12 @@ class GUIGame:
         # render the screen
         self.render()
 
+    # purpose: meta-function that calls the other rendering steps
     def render(self):
         self.render_map(self.cnv_map)
         self.render_stats(self.cnv_stats)
 
+    # purpose: renders the stats display
     def render_stats(self, canvas):
         # clear the canvas
         canvas.delete(tk.ALL)
@@ -194,6 +211,7 @@ class GUIGame:
         canvas.create_text(100, 70, text="Health", font=("Arial", 18))
         canvas.create_text(100, 95, text=str(self.player.get_health()), font=("Arial", 16))
 
+    # purpose: renders the map with canvas rects
     def render_map(self, canvas):
         # clear the canvas
         canvas.delete(tk.ALL)
@@ -216,12 +234,14 @@ class GUIGame:
         if valid_moves[3] is not None:
             canvas.create_rectangle(0, 125, 50, 175, fill="white", outline="black")
 
+    # purpose: adds text to the log window
     def insert_log_text(self, text):
         self.txt_log.configure(state="normal")
         self.txt_log.insert(tk.END, text)
         self.txt_log.see(tk.END)
         self.txt_log.configure(state="disabled")
 
+    # purpose: checks the player's current room for enemies and initiates a battle if present
     def check_enemies(self):
         room_enemies = self.player.get_current_room().get_enemies()
         if len(room_enemies) != 0:
@@ -229,9 +249,13 @@ class GUIGame:
             battle_window = tk.Toplevel()
             # only allow user to interact with battle window
             battle_window.grab_set()
-            battle = GUIBattle(battle_window, self.player, room_enemies[0])
+            # force focus on the window to start the grab set
+            battle_window.focus()
+            # pass up the current object so battle window can update stats
+            battle = GUIBattle(battle_window, self, room_enemies[0])
             room_enemies.remove(room_enemies[0])
 
+    # purpose: checks the player's current room for healing items and applies them if present
     def check_healing_items(self):
         room_items = self.player.get_current_room().get_items()
         if len(room_items) != 0:
@@ -243,6 +267,7 @@ class GUIGame:
                 # remove the item
                 room_items.remove(i)
 
+    # purpose: handles player movement, checks to make sure a move is valid and executes it
     def move(self, direction):
         # updates the player's location to the room in the specified direction
         if direction == "N":
@@ -292,6 +317,7 @@ class GUIGame:
         self.render()
 
 
+# purpose: initial GUI object, primarily handles the start screen and instantiating the main gameplay GUI
 class GUIMain:
     def __init__(self, tk_parent):
         # hide the root window and spawn a new window for the start screen
@@ -334,8 +360,14 @@ class GUIMain:
         # pack the frame containing all widgets with some padding
         frm_container.pack(padx=20, pady=20)
 
+    # purpose: instantiates the main gameplay GUI
     def start_game(self, name, tk_start_window, tk_parent):
-        # hide the start window
-        tk_start_window.withdraw()
-        # create the main game window
-        game_window = GUIGame(tk_parent, name)
+        # check name validity
+        if name == "" or name.startswith(" "):
+            messagebox.showerror("Error", "Name must not be empty, and must not start with a space.")
+            pass
+        else:
+            # hide the start window
+            tk_start_window.withdraw()
+            # create the main game window
+            game_window = GUIGame(tk_parent, name)
