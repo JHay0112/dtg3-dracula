@@ -25,10 +25,17 @@ def on_close_ignore():
 # purpose: handles the battle window and battle system itself
 class GUIBattle:
     # constants
-    DAMAGE_GIVEN_MIN = 0
-    DAMAGE_GIVEN_MAX = 20
-    DAMAGE_TAKEN_MIN = 0
+    # player attacks
+    DAMAGE_STRIKE_MIN = 1
+    DAMAGE_STRIKE_MAX = 10
+    DAMAGE_SMASH_MIN = 1
+    DAMAGE_SMASH_MAX = 20
+    # enemy attack
+    DAMAGE_TAKEN_MIN = 1
     DAMAGE_TAKEN_MAX = 10
+    # enemy attack if player blocks
+    DAMAGE_TAKEN_BLOCK_MIN = 0
+    DAMAGE_TAKEN_BLOCK_MAX = 3
 
     def __init__(self, tk_parent, game_object, enemy):
         self.tk_parent = tk_parent
@@ -62,8 +69,9 @@ class GUIBattle:
         lbl_player = ttk.Label(frm_container, text=self.player.get_name(), font=("Arial", 16))
         lbl_player_health = ttk.Label(frm_container, textvariable=self.var_player_health, font=("Arial", 12))
 
-        btn_defend = ttk.Button(frm_container, text="Defend", command=lambda defend=True: self.battle(defend))
-        btn_attack = ttk.Button(frm_container, text="Attack", command=lambda defend=False: self.battle(defend))
+        btn_strike = ttk.Button(frm_container, text="Strike", command=lambda action="strike": self.battle(action))
+        btn_smash = ttk.Button(frm_container, text="Smash", command=lambda action="smash": self.battle(action))
+        btn_block = ttk.Button(frm_container, text="Block", command=lambda action="block": self.battle(action))
 
         # insert widgets into the grid, span columns to center them relative to the buttons
         lbl_battle.grid(row=0, columnspan=2)
@@ -73,23 +81,30 @@ class GUIBattle:
         lbl_player.grid(row=4, columnspan=2)
         lbl_player_health.grid(row=5, columnspan=2)
 
-        btn_defend.grid(row=6, column=0, sticky="nesw")
-        btn_attack.grid(row=6, column=1, sticky="nesw")
+        btn_strike.grid(row=6, column=0, sticky="nesw")
+        btn_smash.grid(row=6, column=1, sticky="nesw")
+        btn_block.grid(row=7, column=0, sticky="nesw", columnspan=2)
 
         # pack the frame containing all widgets with some padding
         frm_container.pack(padx=20, pady=20)
 
-    # purpose: handles actual battle functionality
-    def battle(self, defend):
-        # if defend set to true, defend instead of attacking
-        if defend:
-            # no damage taken
-            return
+    # purpose: handles battle action inputs
+    def battle(self, action):
+        if action == "block":
+            damage_taken = random.randint(self.DAMAGE_TAKEN_BLOCK_MIN, self.DAMAGE_TAKEN_BLOCK_MAX)
+            self.apply_damage(damage_taken, 0)
+        elif action == "strike":
+            damage_given = random.randint(self.DAMAGE_STRIKE_MIN, self.DAMAGE_STRIKE_MAX)
+            damage_taken = random.randint(self.DAMAGE_TAKEN_MIN, self.DAMAGE_TAKEN_MAX)
+            self.apply_damage(damage_taken, damage_given)
+        elif action == "smash":
+            damage_given = random.randint(self.DAMAGE_SMASH_MIN, self.DAMAGE_SMASH_MAX)
+            damage_taken = random.randint(self.DAMAGE_TAKEN_MIN, self.DAMAGE_TAKEN_MAX)
+            self.apply_damage(damage_taken, damage_given)
 
-        damage_dealt = random.randint(self.DAMAGE_GIVEN_MIN, self.DAMAGE_GIVEN_MAX)
-        damage_taken = random.randint(self.DAMAGE_TAKEN_MIN, self.DAMAGE_TAKEN_MAX)
-
-        enemy_health = self.enemy.get_health() - damage_dealt
+    # purpose: applies damage calculated in battle function, and checks for player or enemy death
+    def apply_damage(self, damage_taken, damage_given):
+        enemy_health = self.enemy.get_health() - damage_given
         player_health = self.player.get_health() - damage_taken
 
         # apply dealt damage to enemy
