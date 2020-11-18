@@ -6,6 +6,8 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox
+from playsound import playsound
+import os
 import entities
 import navigation
 import sys
@@ -92,14 +94,18 @@ class GUIBattle:
     def battle(self, action):
         if action == "block":
             damage_taken = random.randint(self.DAMAGE_TAKEN_BLOCK_MIN, self.DAMAGE_TAKEN_BLOCK_MAX)
+            # play a random sound from the given action's sound directory
+            playsound("sounds\\block\\" + random.choice(os.listdir("sounds\\block\\")))
             self.apply_damage(damage_taken, 0)
         elif action == "strike":
             damage_given = random.randint(self.DAMAGE_STRIKE_MIN, self.DAMAGE_STRIKE_MAX)
             damage_taken = random.randint(self.DAMAGE_TAKEN_MIN, self.DAMAGE_TAKEN_MAX)
+            playsound("sounds\\strike\\" + random.choice(os.listdir("sounds\\strike\\")))
             self.apply_damage(damage_taken, damage_given)
         elif action == "smash":
             damage_given = random.randint(self.DAMAGE_SMASH_MIN, self.DAMAGE_SMASH_MAX)
             damage_taken = random.randint(self.DAMAGE_TAKEN_MIN, self.DAMAGE_TAKEN_MAX)
+            playsound("sounds\\smash\\" + random.choice(os.listdir("sounds\\smash\\")))
             self.apply_damage(damage_taken, damage_given)
 
     # purpose: applies damage calculated in battle function, and checks for player or enemy death
