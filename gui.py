@@ -330,6 +330,8 @@ class GUIMain:
 
         # user's name
         var_name = tk.StringVar()
+        # user's age
+        var_age = tk.StringVar()
 
         # generate all widgets on a frame before adding them to the grid
         frm_container = ttk.Frame(tk_start_window)
@@ -344,9 +346,14 @@ class GUIMain:
 
         lbl_name = ttk.Label(frm_container, text="Please enter your name:", font=("Arial", 12))
         ent_name = ttk.Entry(frm_container, textvariable=var_name)
+
+        lbl_age = ttk.Label(frm_container, text="Please enter your age:", font=("Arial", 12))
+        ent_age = ttk.Entry(frm_container, textvariable=var_age)
+
         btn_quit = ttk.Button(frm_container, text="Quit", command=sys.exit)
         btn_start = ttk.Button(frm_container, text="Start",
-                               command=lambda: self.start_game(var_name.get(), tk_start_window, tk_parent))
+                               command=lambda: self.start_game(var_name.get(), var_age.get(),
+                                                               tk_start_window, tk_parent))
 
         # insert widgets into the grid, span columns to center them relative to the buttons
         lbl_welcome.grid(row=0, columnspan=2)
@@ -354,20 +361,31 @@ class GUIMain:
         msg_tip.grid(row=2, columnspan=2)
         lbl_name.grid(row=3, columnspan=2)
         ent_name.grid(row=4, columnspan=2, sticky="nesw")
-        btn_quit.grid(row=5, column=0, sticky="nesw")
-        btn_start.grid(row=5, column=1, sticky="nesw")
+        lbl_age.grid(row=5, columnspan=2)
+        ent_age.grid(row=6, columnspan=2, sticky="nesw")
+        btn_quit.grid(row=7, column=0, sticky="nesw")
+        btn_start.grid(row=7, column=1, sticky="nesw")
 
         # pack the frame containing all widgets with some padding
         frm_container.pack(padx=20, pady=20)
 
     # purpose: instantiates the main gameplay GUI
-    def start_game(self, name, tk_start_window, tk_parent):
+    def start_game(self, name, age, tk_start_window, tk_parent):
         # check name validity
         if name == "" or name.startswith(" "):
             messagebox.showerror("Error", "Name must not be empty, and must not start with a space.")
             pass
         else:
-            # hide the start window
-            tk_start_window.withdraw()
-            # create the main game window
-            game_window = GUIGame(tk_parent, name)
+            # check age
+            try:
+                age_int = int(age)
+                if age_int < 13:
+                    messagebox.showerror("Error", "You must be over 13 to play this game.")
+                    sys.exit()
+                # hide the start window
+                tk_start_window.withdraw()
+                # create the main game window
+                game_window = GUIGame(tk_parent, name)
+            except ValueError:
+                messagebox.showerror("Error", "Age must be a number.")
+                pass
